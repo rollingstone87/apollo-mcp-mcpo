@@ -4,6 +4,30 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Helper function to strip URL
+const stripUrl = (url?: string): string | undefined => {
+  if (!url) return undefined;
+  
+  try {
+    // Remove protocol (http://, https://)
+    let stripped = url.replace(/^https?:\/\//, '');
+    
+    // Remove www.
+    stripped = stripped.replace(/^www\./, '');
+    
+    // Remove trailing slash
+    stripped = stripped.replace(/\/$/, '');
+    
+    // Convert to lowercase
+    stripped = stripped.toLowerCase();
+    
+    return stripped;
+  } catch (error) {
+    console.error('Error stripping URL:', error);
+    return url;
+  }
+};
+
 // Type definitions for Apollo.io API responses
 export interface PeopleEnrichmentQuery {
   first_name?: string;
@@ -33,6 +57,13 @@ export interface OrganizationSearchQuery {
   [key: string]: any;
 }
 
+export interface EmployeesOfCompanyQuery {
+  company: string;
+  website_url?: string;
+  linkedin_url?: string;
+  [key: string]: any;
+}
+
 export class ApolloClient {
   private apiKey: string;
   private baseUrl: string;
@@ -50,7 +81,7 @@ export class ApolloClient {
     this.headers = {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-cache',
-      'Authorization': `Bearer ${this.apiKey}`
+      'x-api-key': this.apiKey
     };
 
     this.axiosInstance = axios.create({
@@ -66,6 +97,8 @@ export class ApolloClient {
   async peopleEnrichment(query: PeopleEnrichmentQuery): Promise<any> {
     try {
       const url = `${this.baseUrl}/people/match`;
+      console.log('url', url);
+      console.log('query', query);
       const response = await this.axiosInstance.post(url, query);
       
       if (response.status === 200) {
@@ -160,6 +193,143 @@ export class ApolloClient {
       }
     } catch (error: any) {
       console.error(`Error: ${error.response?.status} - ${error.response?.statusText || error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Get email address for a person using their Apollo ID
+   */
+  async getPersonEmail(apolloId: string): Promise<any> {
+    try {
+      if (!apolloId) {
+        throw new Error('Apollo ID is required');
+      }
+
+      const baseUrl = `https://app.apollo.io/api/v1/mixed_people/add_to_my_prospects`;
+      const payload = {
+        entity_ids: [apolloId],
+        analytics_context: 'Searcher: Individual Add Button',
+        skip_fetching_people: true,
+        cta_name: 'Access email',
+        cacheKey: Date.now()
+      };
+
+      const response = await axios.post(baseUrl, payload, { 
+        headers: { 
+          'X-Api-Key': this.apiKey,
+          'Content-Type': 'application/json'
+        } 
+      });
+
+      if (!response.data) {
+        throw new Error('No data received from Apollo API');
+      }
+
+      const emails = (response?.data?.contacts ?? []).map((item: any) => item.email);
+      return emails;
+    } catch (error: any) {
+      console.error(`Error getting person email: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Find employees of a company using company name or website/LinkedIn URL
+   */
+  async employeesOfCompany(query: EmployeesOfCompanyQuery): Promise<any> {
+    try {
+      const { company, website_url, linkedin_url } = query;
+      
+      if (!company) {
+        throw new Error('Company name is required');
+      }
+
+      const strippedWebsiteUrl = stripUrl(website_url);
+      const strippedLinkedinUrl = stripUrl(linkedin_url);
+      
+      // First search for the company
+      const companySearchPayload = {
+        q_organization_name: company,
+        page: 1,
+        limit: 100
+      };
+      
+      const mixedCompaniesResponse = await axios.post(
+        'https://api.apollo.io/v1/mixed_companies/search', 
+        companySearchPayload, 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': this.apiKey
+          }
+        }
+      );
+      
+      if (!mixedCompaniesResponse.data) {
+        throw new Error('No data received from Apollo API');
+      }
+      
+      let organizations = mixedCompaniesResponse.data.organizations;
+      if (organizations.length === 0) {
+        throw new Error('No organizations found');
+      }
+      
+      // Filter companies by website or LinkedIn URL if provided
+      const companyObjs = organizations.filter((item: any) => {
+        const companyLinkedin = stripUrl(item.linkedin_url);
+        const companyWebsite = stripUrl(item.website_url);
+        
+        if (strippedLinkedinUrl && companyLinkedin && companyLinkedin === strippedLinkedinUrl) {
+          return true;
+        } else if (strippedWebsiteUrl && companyWebsite && companyWebsite === strippedWebsiteUrl) {
+          return true;
+        }
+        return false;
+      });
+      
+      // If we have filtered results, use the first one, otherwise use the first from the original search
+      const companyObj = companyObjs.length > 0 ? companyObjs[0] : organizations[0];
+      const companyId = companyObj.id;
+      
+      if (!companyId) {
+        throw new Error('Could not determine company ID');
+      }
+      
+      // Now search for employees
+      const peopleSearchPayload: any = {
+        organization_ids: [companyId],
+        page: 1,
+        limit: 100
+      };
+      
+      // Add optional filters if provided in the tool config
+      if (query.person_seniorities) {
+        peopleSearchPayload.person_titles = (query.person_seniorities ?? '').split(',').map((item: string) => item.trim());
+      }
+      
+      if (query.contact_email_status) {
+        peopleSearchPayload.contact_email_status_v2 = (query.contact_email_status ?? '').split(',').map((item: string) => item.trim());
+      }
+      
+      const peopleResponse = await axios.post(
+        'https://api.apollo.io/v1/mixed_people/search', 
+        peopleSearchPayload, 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Api-Key': this.apiKey
+          }
+        }
+      );
+      
+      if (!peopleResponse.data) {
+        throw new Error('No data received from Apollo API');
+      }
+      
+      return peopleResponse.data.people || [];
+    } catch (error: any) {
+      console.error(`Error finding employees: ${error.message}`);
       return null;
     }
   }

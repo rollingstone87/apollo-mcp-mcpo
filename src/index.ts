@@ -101,6 +101,10 @@ class ApolloServer {
               organization_name: { 
                 type: 'string', 
                 description: "Organization name" 
+              },
+              linkedin_url: {
+                type: 'string',
+                description: "Person's LinkedIn profile URL"
               }
             }
           }
@@ -178,6 +182,42 @@ class ApolloServer {
             },
             required: ['organization_id']
           }
+        },
+        {
+          name: 'get_person_email',
+          description: 'Get email address for a person using their Apollo ID',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              apollo_id: {
+                type: 'string',
+                description: 'Apollo.io person ID'
+              }
+            },
+            required: ['apollo_id']
+          }
+        },
+        {
+          name: 'employees_of_company',
+          description: 'Find employees of a company using company name or website/LinkedIn URL',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              company: {
+                type: 'string',
+                description: 'Company name'
+              },
+              website_url: {
+                type: 'string',
+                description: 'Company website URL'
+              },
+              linkedin_url: {
+                type: 'string',
+                description: 'Company LinkedIn URL'
+              }
+            },
+            required: ['company']
+          }
         }
       ];
       
@@ -231,6 +271,26 @@ class ApolloServer {
           
           case 'organization_job_postings': {
             const result = await this.apollo.organizationJobPostings(args.organization_id as string);
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify(result, null, 2)
+              }]
+            };
+          }
+          
+          case 'get_person_email': {
+            const result = await this.apollo.getPersonEmail(args.apollo_id as string);
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify(result, null, 2)
+              }]
+            };
+          }
+          
+          case 'employees_of_company': {
+            const result = await this.apollo.employeesOfCompany(args as any);
             return {
               content: [{
                 type: 'text',
