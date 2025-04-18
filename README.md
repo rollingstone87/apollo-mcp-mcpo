@@ -7,6 +7,10 @@
 
 A powerful Model Context Protocol (MCP) server implementation for seamless Apollo.io API integration, enabling AI assistants to interact with Apollo.io data.
 
+<a href="https://glama.ai/mcp/servers/@lkm1developer/apollo-io-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@lkm1developer/apollo-io-mcp-server/badge" alt="Apollo.io Server MCP server" />
+</a>
+
 ## Overview
 
 This MCP server provides a comprehensive set of tools for interacting with the Apollo.io API, allowing AI assistants to:
