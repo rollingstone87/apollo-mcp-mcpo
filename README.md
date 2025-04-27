@@ -32,8 +32,8 @@ This MCP server provides a comprehensive set of tools for interacting with the A
 
 ```bash
 # Clone the repository
-git clone https://github.com/lkm1developer/apollo-io-mcp-server.git
-cd apollo-io-mcp-server
+git clone https://github.com/rollingstone87/apollo-mcpo.git
+cd apollo-mcpo
 
 # Build Image from the repo
 docker built -t apollo-mcp .
