@@ -43,6 +43,8 @@ docker built -t apollo-mcp .
 
 ### Starting the Server with MCPO
 
+## STEP 1. Prepare your config file for mcpo
+
 ```config-docker-apollo.json
 {
   "mcpServers": {
@@ -60,6 +62,8 @@ docker built -t apollo-mcp .
   }
 }
 ```
+
+## Step 2. Start the Container in Docker
 
 ```bash
 # Start the server
