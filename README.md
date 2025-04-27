@@ -43,6 +43,24 @@ docker built -t apollo-mcp .
 
 ### Starting the Server with MCPO
 
+```config-docker-apollo.json
+{
+  "mcpServers": {
+    "apollo-mcpo-server": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--network", "mcp-network",
+        "-e", "APOLLO_IO_API_KEY=your_api_key",
+        "apollo-mcp-image"
+      ]      
+    }
+  }
+}
+```
+
 ```bash
 # Start the server
 docker run -d --name mcpo-docker-tools -p 8001:8000 --network mcp-network -v /path/to/config-docker-apollo.json:/app/config-docker-apollo.json -v /var/run/docker.sock:/var/run/docker.sock -e APOLLO_IO_API_KEY="your_api_key" mcpo-docker:latest mcpo --config /app/config-docker-apollo.json
