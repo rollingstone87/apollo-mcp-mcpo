@@ -41,7 +41,7 @@ docker built -t apollo-mcp .
 
 ## Usage
 
-### Starting the Server
+### Starting the Server with MCPO
 
 ```bash
 # Start the server
