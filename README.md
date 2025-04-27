@@ -35,37 +35,8 @@ This MCP server provides a comprehensive set of tools for interacting with the A
 git clone https://github.com/lkm1developer/apollo-io-mcp-server.git
 cd apollo-io-mcp-server
 
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-```
-
-## Configuration
-
-The server requires an Apollo.io API access token. You can obtain one by:
-
-1. Going to your [Apollo.io Account](https://app.apollo.io/)
-2. Navigating to Settings > API
-3. Generating an API key
-
-You can provide the token in two ways:
-
-1. As an environment variable:
-   ```
-   APOLLO_IO_API_KEY=your-api-key
-   ```
-
-2. As a command-line argument:
-   ```
-   npm start -- --api-key=your-api-key
-   ```
-
-For development, create a `.env` file in the project root to store your environment variables:
-
-```
-APOLLO_IO_API_KEY=your-api-key
+# Build Image from the repo
+docker built -t apollo-mcp
 ```
 
 ## Usage
@@ -74,45 +45,9 @@ APOLLO_IO_API_KEY=your-api-key
 
 ```bash
 # Start the server
-npm start
+docker run -d --name mcpo-docker-tools -p 8001:8000 --network mcp-network -v /path/to/config-docker-apollo.json:/app/config-docker-apollo.json -v /var/run/docker.sock:/var/run/docker.sock -e APOLLO_IO_API_KEY="your_api_key" mcpo-docker:latest mcpo --config /app/config-docker-apollo.json
 
-# Or with a specific API key
-npm start -- --api-key=your-api-key
-
-# Run the SSE server with authentication
-npx mcp-proxy-auth node dist/index.js
 ```
-
-### Implementing Authentication in SSE Server
-
-The SSE server uses the [mcp-proxy-auth](https://www.npmjs.com/package/mcp-proxy-auth) package for authentication. To implement authentication:
-
-1. Install the package:
-   ```bash
-   npm install mcp-proxy-auth
-   ```
-
-2. Set the `AUTH_SERVER_URL` environment variable to point to your API key verification endpoint:
-   ```bash
-   export AUTH_SERVER_URL=https://your-auth-server.com/verify
-   ```
-
-3. Run the SSE server with authentication:
-   ```bash
-   npx mcp-proxy-auth node dist/index.js
-   ```
-
-4. The SSE URL will be available at:
-   ```
-   localhost:8080/sse?apiKey=apikey
-   ```
-
-   Replace `apikey` with your actual API key for authentication.
-
-The `mcp-proxy-auth` package acts as a proxy that:
-- Intercepts requests to your SSE server
-- Verifies API keys against your authentication server
-- Only allows authenticated requests to reach your SSE endpoint
 
 ### Integrating with AI Assistants
 
