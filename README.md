@@ -1,4 +1,4 @@
-# Apollo.io MCP Server
+# Apollo.io MCP Server using Docker for MCPO
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9.5-blue.svg)](https://www.typescriptlang.org/)
 [![Apollo.io API](https://img.shields.io/badge/Apollo.io%20API-v1-orange.svg)](https://docs.apollo.io/reference/introduction)
@@ -36,7 +36,7 @@ git clone https://github.com/lkm1developer/apollo-io-mcp-server.git
 cd apollo-io-mcp-server
 
 # Build Image from the repo
-docker built -t apollo-mcp
+docker built -t apollo-mcp .
 ```
 
 ## Usage
