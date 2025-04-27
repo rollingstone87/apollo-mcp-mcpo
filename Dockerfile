@@ -5,6 +5,7 @@ COPY . /app
 WORKDIR /app
 
 RUN npm install
+RUN npm run build
 
 FROM node:22-alpine AS release
 
@@ -16,7 +17,5 @@ COPY --from=builder /app/package-lock.json /app/package-lock.json
 
 ENV NODE_ENV=production
 
-
 RUN npm ci --ignore-scripts --omit-dev
-EXPOSE 8080
-ENTRYPOINT ["npx", "mcp-proxy", "node", "dist/index.js"]
+ENTRYPOINT ["npm", "start"]
